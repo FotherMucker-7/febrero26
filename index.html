@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#ff4b2b">
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="14 razones, 1 historia de amor. Un regalo especial de San Valentín.">
+    <meta name="author" content="Pedro">
+    <meta name="keywords" content="san valentín, amor, regalo romántico">
+
+    <!-- Metadatos para compartir en Redes Sociales / WhatsApp -->
+    <meta property="og:title" content="Para la mujer de mi vida 🌹">
+    <meta property="og:description" content="14 razones, 1 historia de amor. Un regalo especial de San Valentín.">
+    <meta property="og:image" content="https://tu-proyecto.vercel.app/assets/img/og-image.jpg">
+    <meta property="og:url" content="https://tu-proyecto.vercel.app/">
+    <meta property="og:type" content="website">
+
+    <!-- Twitter Card (por si acaso) -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://tu-proyecto.vercel.app/assets/img/og-image.jpg">
+
+    <title>14 Razones</title>
+    <!-- Favicon temporal usando imagen existente (cambiar cuando crees icon-192.png) -->
+    <link rel="icon" href="assets/icon-192.png">
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <!-- Preconectar para fuentes si usas Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&family=Dancing+Script:wght@700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Pantalla de Bienvenida / Header -->
+    <header class="hero" role="banner">
+        <div class="header-content">
+            <h1>14 Razones</h1>
+            <p class="poem" id="poem">
+                <span>Tu risa, nuestros momentos, tu compañía</span>
+                <span>vuelven especial</span>
+                <span>un día que antes era cualquiera.</span>
+
+                <span>Llegaste tú y tuvo sentido.</span>
+                <span>Aunque no crea en fechas,</span>
+                <span>sí creo en el sentido que les das,</span>
+                <span>en el significado que surge gracias a ti.</span>
+
+                <span>Por eso hoy existe,</span>
+                <span>por eso estas 14 razones:</span>
+                <span>pequeños intentos de decir</span>
+                <span>lo feliz que soy contigo</span>
+                <span>y de darte las gracias</span>
+                <span>por estar en mi vida.</span>
+            </p>
+
+            <div id="countdown" class="timer" role="timer" aria-live="polite">Esperando el 14...</div>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal de las Tarjetas -->
+    <main role="main">
+        <div id="grid-container" class="cards-grid" role="list" aria-label="Tarjetas de San Valentín">
+            <!-- JS inyectará las tarjetas aquí -->
+        </div>
+    </main>
+
+    <!-- El Modal (Overlay) que se abre al hacer click -->
+    <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-content">
+            <span id="close-btn" class="close" role="button" aria-label="Cerrar modal" tabindex="0">&times;</span>
+
+            <div class="modal-header">
+                <img id="modal-img" src="" alt="Recuerdo">
+            </div>
+
+            <div class="modal-body">
+                <h2 id="modal-title">Título Canción</h2>
+                <p id="modal-text">Aquí va tu texto romántico...</p>
+
+                <!-- NUEVO: Contenedor para botones especiales -->
+                <div id="extra-interaction" class="extra-features"></div>
+
+                <!-- Reproductor de Audio Nativo (simple y funcional) -->
+                <audio id="audio-player" controls aria-label="Reproductor de música">
+                    <source src="" type="audio/mpeg">
+                    Tu navegador no soporta audio.
+                </audio>
+            </div>
+
+            <!-- Botón especial para la tarjeta 14 (Desbloqueo manual) -->
+            <div id="manual-unlock-area" class="hidden">
+                <input type="password" id="pin-input" placeholder="PIN Secreto" maxlength="4"
+                    aria-label="Ingresa el PIN secreto">
+                <button id="unlock-btn" aria-label="Desbloquear tarjeta final">Desbloquear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts en orden -->
+    <script src="data.js"></script>
+    <script src="geolocation.js"></script>
+    <script src="app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+</body>
+
+</html>
