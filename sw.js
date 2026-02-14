@@ -1,12 +1,12 @@
-const CACHE_NAME = 'amor-app-v7';
+const CACHE_NAME = 'amor-app-v10';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './style.css',
     './app.js',
     './data.js',
-    './geolocation.js',
     './manifest.json',
+    'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
     'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js',
     'https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&family=Dancing+Script:wght@700&display=swap',
 

@@ -3,11 +3,11 @@
 // ==========================================
 // Cambia esto a "true" para ver todo desbloqueado como si fuera el futuro
 // Cambia a "false" para simular la experiencia real
-const DEV_MODE = true;
+const DEV_MODE = false;
 
 // Si quieres probar una hora específica, descomenta y edita esta línea:
-const FAKE_NOW = new Date(2026, 1, 14, 22, 0); // 14 Feb, 7:59:50 AM
-// const FAKE_NOW = null; // Dejar en null para usar la hora real
+// const FAKE_NOW = new Date(2026, 1, 14, 22, 30); // 14 Feb, 7:59:50 AM
+const FAKE_NOW = null; // Dejar en null para usar la hora real
 
 // ==========================================
 // SISTEMA DE TIEMPO SIMULADO
@@ -18,7 +18,7 @@ const REAL_START_TIME = new Date(); // Hora real cuando se carga la página
 const FAKE_START_TIME = FAKE_NOW ? new Date(FAKE_NOW) : null; // Copia de FAKE_NOW
 
 function getCurrentTime() {
-    if (DEV_MODE && FAKE_START_TIME) {
+    if (FAKE_START_TIME) {
         // Calcular cuánto tiempo ha pasado en la realidad
         const elapsedMs = new Date() - REAL_START_TIME;
 
@@ -168,13 +168,14 @@ function renderGrid() {
         // Si estamos en DEV_MODE puro (sin hora específica), desbloquear todo
         if (DEV_MODE && !FAKE_NOW) isTimeToUnlock = true;
 
-        // Recuperar si ya fue revelada anteriormente
-        const wasRevealed = previousStates[card.id]?.wasRevealed || false;
+        // Recuperar si ya fue revelada anteriormente desde localStorage
+        const wasRevealed = localStorage.getItem(`card_${card.id}_revealed`) === 'true' ||
+            previousStates[card.id]?.wasRevealed || false;
 
-        // === LÓGICA ESPECIAL PARA TARJETA 14 (GEOLOCALIZACIÓN) ===
+        // === LÓGICA ESPECIAL PARA TARJETA 14 (QR CODE) ===
         let state;
 
-        if (card.id === 14 && card.requiresGeolocation) {
+        if (card.id === 14 && card.requiresQR) {
             // Verificar si tarjeta 13 fue revelada
             const card13Revealed = localStorage.getItem('card_13_revealed') === 'true';
 
@@ -183,14 +184,14 @@ function renderGrid() {
                 state = 'locked';
                 cardEl.dataset.specialMessage = "Completa la tarjeta 13 primero 💕";
             } else {
-                // Tarjeta 13 revelada, ahora depende de geolocalización
-                const unlockedByLocation = localStorage.getItem('card14_unlocked_by_location') === 'true';
+                // Tarjeta 13 revelada, ahora depende de QR
+                const qrScanned = localStorage.getItem('qr_validated') === 'true';
 
-                if (!unlockedByLocation) {
-                    // Esperando que llegue a la ubicación
-                    state = 'waiting-location';
+                if (!qrScanned) {
+                    // Esperando escaneo de QR
+                    state = 'waiting-qr';
                 } else if (!wasRevealed) {
-                    // Llegó a la ubicación, espera click
+                    // QR escaneado, espera click
                     state = 'unlocked';
                 } else {
                     // Ya fue revelada
@@ -213,8 +214,8 @@ function renderGrid() {
             cardEl.classList.add('locked');
         } else if (state === 'unlocked') {
             cardEl.classList.add('unlocked');
-        } else if (state === 'waiting-location') {
-            cardEl.classList.add('waiting-location');
+        } else if (state === 'waiting-qr') {
+            cardEl.classList.add('waiting-qr');
         }
         // Si está revelada, no tiene clase especial (normal)
 
@@ -225,7 +226,7 @@ function renderGrid() {
         cardEl.setAttribute('role', 'listitem');
         cardEl.setAttribute('tabindex', '0');
         const statusText = state === 'locked' ? 'Bloqueada' :
-            state === 'waiting-location' ? 'Esperando tu llegada' :
+            state === 'waiting-qr' ? 'Esperando código QR' :
                 state === 'unlocked' ? 'Lista para revelar' : 'Disponible';
         cardEl.setAttribute('aria-label', `Tarjeta ${card.id}: ${card.title}. ${statusText}`);
 
@@ -245,10 +246,9 @@ function renderGrid() {
                 const message = cardEl.dataset.specialMessage ||
                     `🔒 Disponible a las ${formatTime(card.unlockHour, card.unlockMinute)}`;
                 showToast(message);
-            } else if (state === 'waiting-location') {
-                // Tarjeta 14 esperando que llegues
-                shakeCard(cardEl);
-                showToast(card.geolocationMessage || '📍 Espera a llegar al lugar especial...');
+            } else if (state === 'waiting-qr') {
+                // Tarjeta 14 esperando escaneo QR
+                openQRScanner(card);
             } else if (state === 'unlocked') {
                 // Tarjeta lista para revelar - AQUÍ DISPARAMOS LA ANIMACIÓN
                 revealCard(cardEl, card);
@@ -278,17 +278,13 @@ function revealCard(cardEl, card) {
     // Marcar como revelada
     cardEl.dataset.revealed = 'true';
 
-    // === ESPECIAL: Si es tarjeta 13, activar geolocalización para tarjeta 14 ===
+    // === GUARDAR EN LOCALSTORAGE PARA PERSISTENCIA PERMANENTE ===
+    localStorage.setItem(`card_${card.id}_revealed`, 'true');
+
+    // === ESPECIAL: Si es tarjeta 13, marcar para habilitar tarjeta 14 ===
     if (card.id === 13) {
         localStorage.setItem('card_13_revealed', 'true');
-        console.log('🎯 Tarjeta 13 revelada - Activando geolocalización para tarjeta 14');
-
-        // Iniciar geolocalización después de un breve delay
-        setTimeout(() => {
-            if (typeof initGeolocationIfNeeded === 'function') {
-                initGeolocationIfNeeded();
-            }
-        }, 2000); // 2 segundos después de revelar tarjeta 13
+        console.log('🎯 Tarjeta 13 revelada - Tarjeta 14 ahora esperando código QR');
     }
 
     // Remover clase unlocked y agregar revealing
@@ -637,7 +633,7 @@ function updateCountdown() {
     const el = document.getElementById('countdown');
 
     if (diff <= 0) {
-        el.innerText = "¡Feliz San Valentín!";
+        el.innerText = "¡Feliz San Valentín! \n 💕❤💖";
         return;
     }
 
@@ -675,4 +671,141 @@ function partyEffect() {
             zIndex: 2001
         });
     }, 500);
+}
+
+// ==========================================
+// SISTEMA DE ESCANEO QR (TARJETA 14)
+// ==========================================
+
+let qrScanner = null;
+
+function openQRScanner(card) {
+    const scannerModal = document.createElement('div');
+    scannerModal.id = 'qr-scanner-modal';
+    scannerModal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.95);
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    `;
+
+    scannerModal.innerHTML = `
+        <div style="text-align: center; color: white; margin-bottom: 20px;">
+            <h2 style="font-size: 1.5rem; margin-bottom: 10px;">📷 Escanea el código QR</h2>
+            <p>Apunta la cámara al código que te mostrarán</p>
+        </div>
+        <div id="qr-reader" style="width: 100%; max-width: 500px; border-radius: 15px; overflow: hidden;"></div>
+        <div style="margin-top: 20px; display: flex; gap: 10px; flex-direction: column; align-items: center;">
+            <button id="close-scanner" style="padding: 12px 24px; background: #ff4b2b; color: white; border: none; border-radius:8px; font-size: 1rem; cursor: pointer;">Cancelar</button>
+            <button id="use-emergency-pin" style="padding: 10px 20px; background: transparent; color: #aaa; border: 1px solid #555; border-radius: 8px; font-size: 0.9rem; cursor: pointer;">Usar código de emergencia</button>
+        </div>
+    `;
+
+    document.body.appendChild(scannerModal);
+
+    qrScanner = new Html5Qrcode("qr-reader");
+
+    qrScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+            if (decodedText === card.qrCode) {
+                localStorage.setItem('qr_validated', 'true');
+                qrScanner.stop().then(() => {
+                    document.body.removeChild(scannerModal);
+                    showToast('✅ ¡Código válido! Tarjeta desbloqueada');
+                    renderGrid();
+                    if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+                });
+            } else {
+                showToast('❌ Código QR incorrecto');
+                qrScanner.stop().then(() => document.body.removeChild(scannerModal));
+            }
+        },
+        (errorMessage) => { console.log('Escaneando...'); }
+    ).catch((err) => {
+        console.error('Error iniciando scanner:', err);
+        showToast('❌ No se puede acceder a la cámara');
+        document.body.removeChild(scannerModal);
+    });
+
+    document.getElementById('close-scanner').addEventListener('click', () => {
+        if (qrScanner) {
+            qrScanner.stop().then(() => document.body.removeChild(scannerModal));
+        }
+    });
+
+    document.getElementById('use-emergency-pin').addEventListener('click', () => {
+        if (qrScanner) {
+            qrScanner.stop().then(() => {
+                document.body.removeChild(scannerModal);
+                openEmergencyPinDialog(card);
+            });
+        } else {
+            document.body.removeChild(scannerModal);
+            openEmergencyPinDialog(card);
+        }
+    });
+}
+
+function openEmergencyPinDialog(card) {
+    const pinModal = document.createElement('div');
+    pinModal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.95); z-index: 10000;
+        display: flex; align-items: center; justify-content: center; padding: 20px;
+    `;
+
+    pinModal.innerHTML = `
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 20px; max-width: 400px; text-align: center;">
+            <h2 style="color: white; margin-bottom: 20px;">🔑 Código de Emergencia</h2>
+            <p style="color: #f0f0f0; margin-bottom: 20px;">Ingresa el código de emergencia</p>
+            <input type="text" id="emergency-pin-input" maxlength="4" style="
+                width: 100%; padding: 15px; font-size: 1.5rem; text-align: center;
+                border: none; border-radius: 10px; margin-bottom: 20px; letter-spacing: 10px;
+            " placeholder="****" />
+            <div style="display: flex; gap: 10px;">
+                <button id="submit-emergency-pin" style="flex: 1; padding: 15px; background: white; color: #667eea; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer;">Verificar</button>
+                <button id="cancel-emergency-pin" style="padding: 15px 20px; background: transparent; color: white; border: 2px solid white; border-radius: 10px; cursor: pointer;">Cancelar</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(pinModal);
+
+    const input = document.getElementById('emergency-pin-input');
+    input.focus();
+
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') document.getElementById('submit-emergency-pin').click();
+    });
+
+    document.getElementById('submit-emergency-pin').addEventListener('click', () => {
+        const enteredPin = input.value.trim();
+
+        if (enteredPin === card.emergencyPin) {
+            localStorage.setItem('qr_validated', 'true');
+            document.body.removeChild(pinModal);
+            showToast('✅ Código de emergencia correcto. Tarjeta desbloqueada');
+            renderGrid();
+            if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+        } else {
+            input.value = '';
+            input.style.borderBottom = '3px solid #ff4b2b';
+            showToast('❌ Código incorrecto');
+            setTimeout(() => { input.style.borderBottom = 'none'; }, 1000);
+        }
+    });
+
+    document.getElementById('cancel-emergency-pin').addEventListener('click', () => {
+        document.body.removeChild(pinModal);
+    });
 }
