@@ -435,12 +435,18 @@ h2,
     background: var(--light);
     width: 100%;
     max-width: 500px;
+    max-height: 90vh;
+    /* Máximo 90% de la pantalla */
+    overflow-y: auto;
+    /* Scroll interno cuando el contenido desborda */
     border-top-left-radius: 25px;
     border-top-right-radius: 25px;
     padding: 20px;
     animation: slideUp 0.3s ease-out;
     text-align: center;
     position: relative;
+    -webkit-overflow-scrolling: touch;
+    /* Scroll suave en iOS */
 }
 
 @keyframes slideUp {
